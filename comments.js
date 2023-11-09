@@ -7,5 +7,5 @@ const commentController = require('../controllers/comment');
 // handle request
 router.get('/', commentController.comment_list);
 router.get('/create', commentController.comment_create_get_comment);
-router.get('/create', commentController.comment_create_post_comment);
+router.post('/create', commentController.comment_create_post_comment);
 router.get('/:id/delete', commentController.comment_delete);
