@@ -1,79 +1,67 @@
-// create web server
-const express = require('express');
-// create router
-const router = express.Router();
-// import comments model
-const Comments = require('../models/comments');
-
-// GET /comments
-// get all comments
-router.get('/', (req, res) => {
-    Comments.find()
-        .then(comments => {
-            res.json(comments);
-        })
-        .catch(err => {
-            console.log(`Error: ${err}`);
-            res.json(err);
-        });
+// Create web server
+const express = require("express");
+const bodyParser = require("body-parser");
+const app = express();
+// Create database connection
+const mysql = require("mysql");
+const conn = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "blog"
 });
-
-// GET /comments/:id
-// get single comment by id
-router.get('/:id', (req, res) => {
-    const id = req.params.id;
-    Comments.findById(id)
-        .then(comment => {
-            res.json(comment);
-        })
-        .catch(err => {
-            console.log(`Error: ${err}`);
-            res.json(err);
-        });
+// Connect to database
+conn.connect(err => {
+  if (err) throw err;
+  console.log("Mysql Connected...");
 });
-
-// POST /comments
-// add new comment
-router.post('/', (req, res) => {
-    const comment = req.body;
-    Comments.create(comment)
-        .then(comment => {
-            res.json(comment);
-        })
-        .catch(err => {
-            console.log(`Error: ${err}`);
-            res.json(err);
-        });
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+// Create a root route
+app.get("/", (req, res) => {
+  let sql = "SELECT * FROM comments";
+  let query = conn.query(sql, (err, results) => {
+    if (err) throw err;
+    res.send(JSON.stringify({ status: 200, error: null, response: results }));
+  });
 });
-
-// PUT /comments/:id
-// update comment by id
-router.put('/:id', (req, res) => {
-    const id = req.params.id;
-    const comment = req.body;
-    Comments.findByIdAndUpdate(id, comment, { new: true })
-        .then(comment => {
-            res.json(comment);
-        })
-        .catch(err => {
-            console.log(`Error: ${err}`);
-            res.json(err);
-        });
+// Show single comment
+app.get("/view/:id", (req, res) => {
+  let sql = "SELECT * FROM comments WHERE comment_id=" + req.params.id;
+  let query = conn.query(sql, (err, results) => {
+    if (err) throw err;
+    res.send(JSON.stringify({ status: 200, error: null, response: results }));
+  });
 });
-
-// DELETE /comments/:id
-// delete comment by id
-router.delete('/:id', (req, res) => {
-    const id = req.params.id;
-    Comments.findByIdAndDelete(id)
-        .then(comment => {
-            res.json(comment);
-        })
-        .catch(err => {
-            console.log(`Error: ${err}`);
-            res.json(err);
-        });
+// Add a new comment
+app.post("/add", (req, res) => {
+  let data = { comment_name: req.body.comment_name, comment_body: req.body.comment_body, comment_post_id: req.body.comment_post_id };
+  let sql = "INSERT INTO comments SET ?";
+  let query = conn.query(sql, data, (err, results) => {
+    if (err) throw err;
+    res.send(JSON.stringify({ status: 200, error: null, response: results }));
+  });
 });
-
-// export router
-module.exports = router;
+// Update the comment
+app.put("/update", (req, res) => {
+  let sql =
+    "UPDATE comments SET comment_name='" +
+    req.body.comment_name +
+    "', comment_body='" +
+    req.body.comment_body +
+    "' WHERE comment_id=" +
+    req.body.comment_id;
+  let query = conn.query(sql, (err, results) => {
+    if (err) throw err;
+    res.send(JSON.stringify({ status: 200, error: null, response: results }));
+  });
+});
+// Delete comment
+app.delete("/delete/:id", (req, res) => {
+  let sql = "DELETE FROM comments WHERE comment_id=" + req.params.id + "";
+  let query = conn.query(sql, (err, results) => {
+    if (err) throw err;
+    res.send(JSON.stringify({ status: 200, error: null, response: results }));
+  });
+}
+);
